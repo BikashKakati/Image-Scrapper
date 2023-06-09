@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>ASIN to Image Link Converter</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <h1 class="title">ASIN to Image Link Converter</h1>
+    <form id="uploadForm" enctype="multipart/form-data" class="form">
+      <label for="fileInput" class="form-label">Upload an Excel file with ASINs:</label>
+      <input type="file" id="fileInput" name="file" class="form-input" />
+      <button type="submit" class="form-button">Upload</button>
+    </form>
+    <div id="loader" class="loader"></div>
+    <div id="errorMessage" class="error"></div>
+  </div>
+
+  <script>
+    const loader = document.getElementById('loader');
+    const uploadForm = document.getElementById('uploadForm');
+    const fileInput = document.getElementById('fileInput');
+    const errorMessage = document.getElementById('errorMessage');
+
+    uploadForm.addEventListener('submit', (event) => {
+      event.preventDefault();
+
+      const file = fileInput.files[0];
+      const formData = new FormData();
+      formData.append('file', file);
+
+      showLoader();
+
+      fetch('/upload', {
+        method: 'POST',
+        body: formData
+      })
+      .then((response) => {
+        hideLoader();
+
+        if (response.ok) {
+          response.blob().then((blob) => {
+            const downloadLink = document.createElement('a');
+            downloadLink.href = URL.createObjectURL(blob);
+            downloadLink.download = 'output.xlsx';
+            downloadLink.click();
+          });
+        } else {
+          response.text().then((errorMessage) => {
+            showError(errorMessage);
+          });
+        }
+      })
+      .catch((error) => {
+        hideLoader();
+        showError(error.message);
+      });
+    });
+
+    function showLoader() {
+      loader.style.display = 'block';
+      errorMessage.textContent = '';
+    }
+
+    function hideLoader() {
+      loader.style.display = 'none';
+    }
+
+    function showError(message) {
+      errorMessage.textContent = `Error: ${message}`;
+    }
+  </script>
+</body>
+</html>
